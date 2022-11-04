@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Test;
 import java.util.Random;
 
 @Slf4j
-public class HttpUtilsTest {
+public class GetMSIOrderTest {
 
     @Test
     public void testSubmitOrder() {
