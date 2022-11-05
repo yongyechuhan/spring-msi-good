@@ -6,22 +6,28 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.StringUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
+import org.apache.http.NameValuePair;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 @Slf4j
 public class HttpUtils {
 
-    private static final String COOKIE = "__jdu=16531872872011170887892; shshshfpa=c6bf4d9e-52a7-655a-57e3-18e6d2fdfd74-1653187288; shshshfpb=wYakAi18x54k7u92wiDn3tQ; pinId=Q52uBe6Q_y8NXZKjZxABLA; areaId=2; pin=%E7%8B%AC%E7%81%AF%E7%85%A7%E5%AD%A4%E5%BD%B1; unick=%E7%8B%AC%E7%81%AF%E7%85%A7%E5%AD%A4%E5%BD%B1; _tp=DoWz869YaYYvSlJeaxSDRZPteOBWnfGBD0LkH1bNrNmVWaeLKhCS5NNyei89Yk0P; _pst=%E7%8B%AC%E7%81%AF%E7%85%A7%E5%AD%A4%E5%BD%B1; user-key=7fcb94b3-a107-40f4-a59c-9c46de0ec39f; ipLoc-djd=2-2830-51826-0.975242668; ipLocation=%u4e0a%u6d77; unpl=JF8EAMpnNSttDB5UUBhWGRBAHlpcWwhbGUQGPzJRBlhdTFdXHAEcQhh7XlVdXhRLFx9uYhRXXFNIUw4bCysSEXteXVdZDEsWC2tXVgQFDQ8VXURJQlZAFDNVCV9dSRZRZjJWBFtdT1xWSAYYRRMfDlAKDlhCR1FpMjVkXlh7VAQrAhwWEktUUl1UDkgWA29nA1VUUU1dDRgyGiIXe21kXlkNTR4DX2Y1VW0aHwgDHwYeERgGXVNaXwhCEQBmYQZVXVhLUgQSCx0bGEhtVW5e; TrackID=1IRSvIKD_p0ACV1ST4QnyGznzLtZGxwKKACT2OWA9WhZqrYOZ8DAr7uPzJHxVrsG9PHmi1elgZ2Rw6tS0F_q_il_SHs51NNJSXsJDiEX62V8; ceshi3.com=201; shshshfp=9353fbfab8b37d8f743ffe394a107595; answer-code=\"\"; __jdv=76161171|baidu-pinzhuan|t_288551095_baidupinzhuan|cpc|0f3d30c8dba7459bb52f2eb5eba8ac7d_0_ed1d2e33ad694dbcb4adec4462c626a9|1667565539081; __jdc=122270672; cn=1; __jda=122270672.16531872872011170887892.1653187287.1667564779.1667569000.16; __jdb=122270672.1.16531872872011170887892|16.1667569000; thor=19FC4B6B69635200572AD2079EF159ECF98EF7550FB8CFD061E12727916E68F7245B6A3ABB2C233892F3E1B76FF4B2B5F401DC7DB290E781F097D3E33A3A0295643192A90EA18742380E0F70FD2D0DE2259B63F5701218141E0E71BC68953E06484F9879B15C8AC1901D90EFDEAB2EFC771AE50F936CE16612123615833CF8E7; JSESSIONID=CFC1394AAB40D72BAB81FCD0D25258A6.s1; 3AB9D23F7A4B3C9B=2YGRYGWE4N7ZPR35GV74ROZR2LOCPBWDH47UYO3L464TC7AIOXTCPU7E6IHVP2CAX3T5WABLF4A44J5O2RPPMLTRMQ";
+    private static final String COOKIE = "__jdu=1339144719; areaId=2; shshshfpa=9b4f973b-8777-ed81-4797-e927506817f8-1665902103; shshshfpb=u_1-QelhY0Rzf1J-Bf3mdNw; pinId=Q52uBe6Q_y8NXZKjZxABLA; pin=%E7%8B%AC%E7%81%AF%E7%85%A7%E5%AD%A4%E5%BD%B1; unick=%E7%8B%AC%E7%81%AF%E7%85%A7%E5%AD%A4%E5%BD%B1; _tp=DoWz869YaYYvSlJeaxSDRZPteOBWnfGBD0LkH1bNrNmVWaeLKhCS5NNyei89Yk0P; _pst=%E7%8B%AC%E7%81%AF%E7%85%A7%E5%AD%A4%E5%BD%B1; user-key=3ee7ec09-d205-4169-83ae-b6e7cd409c8f; ipLoc-djd=2-2830-51826-0.975242668; ipLocation=%u4e0a%u6d77; mt_xid=V2_52007VwMQUFVYV18ZSRFsV2ACGwddWFRGShwaXBliA0AFQVFbDk1VHgwANAoRUggKWwlIeRpdBmQfElJBWVFLHEsSWQVsAxBiX2hSahhBG10GZgEUUV1oUlMeTw%3D%3D; unpl=JF8EAK9nNSttWh8HVU5SGUIZSwlQWwoJGUcBPDRSBAlRT1MFGwAaERV7XlVdXhRLFx9uYxRXXFNLVA4YCisSEXteXVdZDEsWC2tXVgQFDQ8VXURJQlZAFDNVCV9dSRZRZjJWBFtdT1xWSAYYRRMfDlAKDlhCR1FpMjVkXlh7VAQrAhkQGEtYUVhdAHsWM2hXNWRaX0JQAysDKxMgCQkIW1kMSBAEImcHVlVYTlEDGworEyBI; TrackID=1qa18oWUhJwnh61pxLlLebeg8n_oCQ60V6KVGK60vOsXq5x5HdiTuYvvDH-AdZ7xV7W0Z4PPWkOEVZJG-jZ3miZ7cG7hVmJGCNJYkA3mvnCmvGXEEjVvxKLk5fr4IXrCN; ceshi3.com=201; __jdv=76161171|baidu-pinzhuan|t_288551095_baidupinzhuan|cpc|0f3d30c8dba7459bb52f2eb5eba8ac7d_0_3ebada3a81e54f0ca3bbfae856113024|1667650305917; __jda=122270672.1339144719.1665902100.1667615260.1667650273.17; __jdc=122270672; shshshfp=29fba3182b841ccc74a8361a3c15411c; thor=19FC4B6B69635200572AD2079EF159ECFBA999F0D0C16306AE4CB2CD69F0F99CF040C485E33C4848AB9DC4D5FD854892EDC2712E306AD0C53AAC9188303A0D3B7F725CF2B245C8D8F312BC9F92762FE4B2C7C0D4FD234C5B10DBF5906C0A57C51A37B5DC64088CC259EC4EB3569AF85F6E29D8C7CD3996EAC5977A933B65075E; shshshsID=b7cb5bcffa3fcf3568cee61df298dc4e_6_1667651248738; cn=1; __jdb=122270672.17.1339144719|17.1667650273; 3AB9D23F7A4B3C9B=EELKSX7MEAYX5VX4VU3SKWTCRUNKBYOHIGHWIPYCCOIDBIFEWC6H2SP7Z7XXSHAYN3HB6PLQQ36FN6T4DM3HI7I4WA";
 
     private static final String MSI_COOKIE = "UM_distinctid=18433870bba77-00a90f43f8cdb1-18525635-1ea000-18433870bbb9cb; cna=196ac18247de478892ca091b4382253b; CNZZDATA1280929406=396867983-1667310553-https%253A%252F%252Fwww.baidu.com%252F%7C1667610691; resetUrl=/ProductDefault?goodsId=357; Authorization=bearer%20eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwOlwvXC8xMjcuMC4wLjE6MzAwMlwvYXBpXC91c2VyTW9iaWxlTG9naW4iLCJpYXQiOjE2Njc2MTEyODQsImV4cCI6MTY2NzY1NDQ4NCwibmJmIjoxNjY3NjExMjg0LCJqdGkiOiIxVDdqQm5jYjFxTUtDTzNyIiwic3ViIjoxNDkxOSwicHJ2IjoiMjNiZDVjODk0OWY2MDBhZGIzOWU3MDFjNDAwODcyZGI3YTU5NzZmNyJ9.XqiJKXVwbFFmW4Jv6oiLV_h2vOMwScgDox28aWXsEcc; userInfo={%22id%22:14919%2C%22username%22:%22%E5%BE%AE%E6%98%9F%E7%94%A8%E6%88%B78652%22%2C%22nickname%22:%22%E5%BE%AE%E6%98%9F%E7%94%A8%E6%88%B78652%22%2C%22mobile%22:%2215801888652%22%2C%22avatar%22:%22https://oss-store.msi.com/goods/165061122618822515.png%22%2C%22gender%22:0%2C%22birthday%22:null%2C%22money%22:%220.00%22%2C%22score%22:100%2C%22successions%22:1%2C%22maxsuccessions%22:1%2C%22prevtime%22:1667611284%2C%22logintime%22:null%2C%22jointime%22:null%2C%22created_at%22:%222022-10-22T03:09:28.000000Z%22%2C%22updated_at%22:%222022-11-01T15:14:14.000000Z%22%2C%22status%22:null%2C%22verification%22:%22%22%2C%22deleted_at%22:null%2C%22city_name%22:null%2C%22province_id%22:null%2C%22city_id%22:null%2C%22area_id%22:null%2C%22is_new_send_coupon%22:3%2C%22email%22:null%2C%22level%22:1%2C%22waitPay%22:0%2C%22waitReceiving%22:0%2C%22waitComment%22:0%2C%22collection%22:0%2C%22isSign%22:0%2C%22sign_give_score%22:100%2C%22level_show%22:%22%E9%9D%92%E9%93%9C%22%2C%22user_oauth%22:{%22id%22:11178%2C%22user_id%22:14919%2C%22platform%22:%22wechat%22%2C%22unionid%22:%22o76qi5wXrmM3NLVBYafqGtbxqaUg%22%2C%22openid%22:%22oxj_c5PAP7NfgYeajRaIPm2QwuSc%22%2C%22nickname%22:%22%E5%BE%AE%E6%98%9F%E7%94%A8%E6%88%B78652%22%2C%22sex%22:0%2C%22country%22:null%2C%22province%22:null%2C%22city%22:null%2C%22headimgurl%22:%22https://oss-store.msi.com/goods/165061122618822515.png%22%2C%22logintime%22:null%2C%22logincount%22:0%2C%22created_at%22:%222022-10-31%2014:23:15%22%2C%22updated_at%22:%222022-10-31T14:23:15.000000Z%22%2C%22pc_openid%22:null%2C%22h5_openid%22:null}}; Hm_lvt_12b6f3589916b46ae78ab99b5e9a9a88=1667315576,1667319115,1667611175,1667612530; acw_tc=7793941c16676129829004756e1b41f4bc6dc174203ac18d8693c5d6ed; Hm_lpvt_12b6f3589916b46ae78ab99b5e9a9a88=1667613462; activeIndex=1";
     private static final String ITEM_ID = "10062682325270";
@@ -63,6 +69,14 @@ public class HttpUtils {
         submitOrder.addHeader("origin", "https://trade.jd.com");
         submitOrder.addHeader("referer", GET_ORDER);
         submitOrder.setHeader("accept", "application/json");
+
+        UrlEncodedFormEntity reqEntity = null;
+        try {
+            reqEntity = new UrlEncodedFormEntity(buildSumbitOrderUrlEncodedBody());
+        } catch (UnsupportedEncodingException e) {
+            log.error("build url encoded form entity failed", e);
+        }
+        submitOrder.setEntity(reqEntity);
         return sendHttpMethod(submitOrder);
     }
 
@@ -109,6 +123,42 @@ public class HttpUtils {
         httpRequestBase.addHeader("user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/107.0.0.0 Safari/537.36");
     }
 
+    public static List<NameValuePair> buildSumbitOrderUrlEncodedBody() {
+        List<NameValuePair> nameValueBody = new ArrayList<>();
+
+        NameValuePair payPassword = new BasicNameValuePair("submitOrderParam.payPassword", "u31u35u32u33u34u36");
+        nameValueBody.add(payPassword);
+
+        NameValuePair remarks = new BasicNameValuePair("vendorRemarks", "[{\"venderId\":\"10493823\",\"remark\":\"\"}]");
+        nameValueBody.add(remarks);
+
+        NameValuePair sopNotPutInvoice = new BasicNameValuePair("vsubmitOrderParam.sopNotPutInvoice", "false");
+        nameValueBody.add(sopNotPutInvoice);
+
+        NameValuePair trackID = new BasicNameValuePair("submitOrderParam.trackID", "TestTrackId");
+        nameValueBody.add(trackID);
+
+        NameValuePair presaleStockSign = new BasicNameValuePair("presaleStockSign", "1");
+        nameValueBody.add(presaleStockSign);
+
+        NameValuePair ignorePriceChange = new BasicNameValuePair("submitOrderParam.ignorePriceChange", "0");
+        nameValueBody.add(ignorePriceChange);
+
+        NameValuePair btSupport = new BasicNameValuePair("submitOrderParam.btSupport", "0");
+        nameValueBody.add(btSupport);
+
+        NameValuePair eid = new BasicNameValuePair("submitOrderParam.eid", "EELKSX7MEAYX5VX4VU3SKWTCRUNKBYOHIGHWIPYCCOIDBIFEWC6H2SP7Z7XXSHAYN3HB6PLQQ36FN6T4DM3HI7I4WA");
+        nameValueBody.add(eid);
+
+        NameValuePair fp = new BasicNameValuePair("submitOrderParam.fp", "7b124fcee3b3833543a0a5c8df335fca");
+        nameValueBody.add(fp);
+
+        NameValuePair zpjd = new BasicNameValuePair("submitOrderParam.zpjd", "1");
+        nameValueBody.add(zpjd);
+
+        return nameValueBody;
+    }
+
     public static String sendHttpMethod(HttpRequestBase httpRequestBase) {
         try {
             HttpResponse httpResponse = HTTP_CLIENT.execute(httpRequestBase);
@@ -141,14 +191,14 @@ public class HttpUtils {
         String message = submitOrder();
         message  = Optional.ofNullable(message).orElse("");
         if (message.equals("")) {
-            EmailUtils.sendEmail("及时查看订单信息");
+//            EmailUtils.sendEmail("及时查看订单信息");
             return true;
         } else {
             message = JSON.parseObject(message).getString("message");
             log.info("get order message:{}", message);
 
             if (!message.contains("无货") && !message.contains("请稍后再试") && !message.contains("获取用户订单信息失败")) {
-                EmailUtils.sendEmail("及时查看订单信息");
+//                EmailUtils.sendEmail("及时查看订单信息");
                 return true;
             }
         }
