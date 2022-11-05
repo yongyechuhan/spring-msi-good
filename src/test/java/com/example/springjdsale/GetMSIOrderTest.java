@@ -29,6 +29,26 @@ public class GetMSIOrderTest {
     }
 
     @Test
+    public void testSumbitMsiOrder() {
+        while(true) {
+            try {
+                Random random = new Random();
+                int randomSleepTime = random.nextInt(10);
+                randomSleepTime = 5000 + randomSleepTime * 100;
+
+                Thread.sleep(randomSleepTime);
+            } catch (InterruptedException e) {
+                log.error("thread sleep failed", e);
+            }
+
+            boolean submitResult = HttpUtils.submitMsi();
+            if (submitResult) {
+                break;
+            }
+        }
+    }
+
+    @Test
     public void testSendEmail() {
         EmailUtils.sendEmail("正在抢购中，请及时关注订单");
     }

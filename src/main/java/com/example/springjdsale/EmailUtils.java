@@ -19,7 +19,7 @@ public class EmailUtils {
     private static String emailServer = "smtp.qq.com";
     private static String emailAccount = "1640734459@qq.com";
 
-    private static String accountToken = "qccjvbbfoxjsfbdi";
+    private static String accountToken = "ratjzgmxjbtddjgi";
 
     public static void sendEmail(String emailContent) {
         Properties props = new Properties();
