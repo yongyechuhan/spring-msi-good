@@ -34,7 +34,7 @@ public class GetMSIOrderTest {
             try {
                 Random random = new Random();
                 int randomSleepTime = random.nextInt(10);
-                randomSleepTime = 5000 + randomSleepTime * 100;
+                randomSleepTime = 6000 + randomSleepTime * 100;
 
                 Thread.sleep(randomSleepTime);
             } catch (InterruptedException e) {
